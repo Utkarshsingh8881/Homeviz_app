@@ -134,12 +134,16 @@ def test_create_intent_and_mock_confirm(api, user_token, booking_ctx):
     bid = booking_ctx["booking"]["id"]
     r = api.post(f"{BASE_URL}/api/payments/create-intent", json={"booking_id": bid},
                  headers=auth_headers(user_token), timeout=30)
-    # Stripe might fail if test key invalid - report but continue to mock confirm
-    if r.status_code != 200:
-        pytest.fail(f"Stripe create-intent failed (key may be invalid): {r.status_code} {r.text}")
+    assert r.status_code == 200, f"create-intent failed: {r.status_code} {r.text}"
     j = r.json()
     assert j.get("client_secret")
+    assert j.get("payment_intent_id")
     assert j["amount"] == 50000 * 100
+    # With the placeholder STRIPE_SECRET_KEY, server must return mock mode
+    assert j.get("mode") in ("mock", "live_test")
+    if j.get("mode") == "mock":
+        assert j["payment_intent_id"].startswith("pi_mock_")
+        assert j["client_secret"].endswith("_secret_mock")
 
     r2 = api.post(f"{BASE_URL}/api/payments/mock-confirm", json={"booking_id": bid},
                   headers=auth_headers(user_token), timeout=15)

@@ -481,6 +481,30 @@ async def create_intent(payload: dict, u=Depends(_current_user)):
 
     amount_paise = booking["booking_token"] * 100  # INR -> paise
 
+    # If the Stripe key is the Emergent placeholder, fall back to a mock
+    # PaymentIntent so the Expo Go MVP demo works end-to-end without a real
+    # Stripe account. The user can drop in their own sk_test_... key any time.
+    is_placeholder = (
+        not STRIPE_SECRET_KEY
+        or STRIPE_SECRET_KEY == "sk_test_emergent"
+        or not STRIPE_SECRET_KEY.startswith("sk_test_")
+        and not STRIPE_SECRET_KEY.startswith("sk_live_")
+    )
+
+    if is_placeholder:
+        mock_id = f"pi_mock_{uuid.uuid4().hex[:16]}"
+        client_secret = f"{mock_id}_secret_mock"
+        await db.bookings.update_one(
+            {"id": booking_id},
+            {"$set": {"stripe_payment_intent_id": mock_id, "stripe_mode": "mock"}},
+        )
+        return {
+            "client_secret": client_secret,
+            "payment_intent_id": mock_id,
+            "amount": amount_paise,
+            "mode": "mock",
+        }
+
     try:
         intent = stripe.PaymentIntent.create(
             amount=amount_paise,
@@ -494,9 +518,14 @@ async def create_intent(payload: dict, u=Depends(_current_user)):
 
     await db.bookings.update_one(
         {"id": booking_id},
-        {"$set": {"stripe_payment_intent_id": intent["id"]}},
+        {"$set": {"stripe_payment_intent_id": intent["id"], "stripe_mode": "live_test"}},
     )
-    return {"client_secret": intent["client_secret"], "payment_intent_id": intent["id"], "amount": amount_paise}
+    return {
+        "client_secret": intent["client_secret"],
+        "payment_intent_id": intent["id"],
+        "amount": amount_paise,
+        "mode": "live_test",
+    }
 
 
 @api.post("/payments/mock-confirm")

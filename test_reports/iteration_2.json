@@ -1,0 +1,52 @@
+{
+  "summary": "Retest after fix for /api/payments/create-intent placeholder Stripe key. Backend pytest: 24/24 PASS (100%). create-intent now correctly returns mode='mock' with pi_mock_<hex> id and *_secret_mock client_secret (verified via new assertions). mock-confirm flips booking.payment_status to 'succeeded' and unit.status to 'booked' (test_create_intent_and_mock_confirm asserts this against proj-1 unit). Regression smoke green: signup/login/me, projects list+filter+detail (no _id leak), pricing engine arithmetic, AI customize-room (Gemini Nano Banana base64), bookings, builder-only (403 for user), admin-only (403 for builder/user), admin verify/approve/stats. Frontend E2E booking flow as demo@user.com: Login -> Discover -> project card -> Aurelia Heights detail -> Customize & price (AI Studio) -> Book unit -> Booking screen -> Start Stripe payment (mock PaymentIntent created, button swaps to Confirm) -> Confirm token payment -> Success state with green checkmark 'Token booked!' rendered. No console errors observed during the run. The pre-existing pointerEvents deprecation warning is still in the codebase but not retested in this iteration.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/projects/{id}/progress",
+        "issue": "Still accepts ProgressUpdate from client including client-supplied id/created_at, then overwrites them server-side. Carried over from iteration_1; consider a ProgressCreate input model."
+      },
+      {
+        "endpoint": "GET /api/projects?only_approved=false",
+        "issue": "Public listing still allows ?only_approved=false to bypass the approved filter without auth. Carried over from iteration_1; consider restricting to admin role."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {
+        "component": "Login (and possibly shared components)",
+        "issue": "Carried over from iteration_1: 'props.pointerEvents is deprecated. Use style.pointerEvents' warning. Not retested this iteration but should be cleaned up by moving pointerEvents into the style object."
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix already verified; no critical action items remain for the booking flow.",
+    "(Optional, carried over) Move pointerEvents from props to style on whatever component triggers the deprecation warning on the login screen.",
+    "(Optional, carried over) Split ProgressCreate vs ProgressUpdate input models for /api/projects/{id}/progress.",
+    "(Optional, carried over) Restrict ?only_approved=false on GET /api/projects to admin role only."
+  ],
+  "critical_code_review_comments": [
+    "Mock-mode branch in create_intent uses a clean placeholder check (empty or 'sk_test_emergent' or non sk_test_/sk_live_ prefix). Logic is sound but the `not X and not Y` precedence relies on `or` being lower than `and`; works correctly but a parenthesized form would be more readable.",
+    "Mock PaymentIntent persists stripe_payment_intent_id=pi_mock_* and stripe_mode='mock' on the booking, which is good for traceability. /api/payments/mock-confirm is intentionally unrestricted to mode so it still works for both mock and live_test bookings in this demo.",
+    "Real Stripe path (sk_test_51... or sk_live_...) is preserved and untouched by the change."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_backend.py (tightened test_create_intent_and_mock_confirm to assert mode in {mock,live_test}, payment_intent_id, and pi_mock_/_secret_mock format for the placeholder-key path)"
+  ],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% on the booking E2E flow as buyer (login, discover, project detail, AI Studio, book unit, start payment, confirm payment, success state all verified)"},
+  "seed_data_creation": "Reused iteration_1 seed state. test_signup created one more TEST_signup_<ts>@example.com user. test_create_project_as_builder_and_progress created another 'TEST Project <ts>' under builder@aurelia.com. Booking flow created a new mock-paid booking against proj-1's first available unit (the unit is now status='booked'). Frontend E2E created one more booking against another available unit in proj-1 (Aurelia Heights, unit A-0804) which is now in 'booked' state with payment_status='succeeded'.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend tests live in /app/backend/tests/test_backend.py and use EXPO_PUBLIC_BACKEND_URL. Demo creds in /app/memory/test_credentials.md. After iteration_1 + iteration_2 runs, several units in proj-1 are now in status='booked' — pick units with status='available' when writing new booking tests. proj-3 (Marina Vista) is now approved and demo-builder-3 (Marina Realty) is now verified, so the original admin verify/approve target is consumed; the test_create_project_as_builder_and_progress test continually creates fresh pending TEST projects that admin can approve against. STRIPE_SECRET_KEY in /app/backend/.env is still the 'sk_test_emergent' placeholder, so create-intent will return mode='mock' — drop a real sk_test_51... key in to exercise the live_test branch.",
+  "rca_of_issue": "Iteration_1 RCA confirmed and resolved. The Stripe AuthenticationError on /api/payments/create-intent caused by the 'sk_test_emergent' placeholder is now bypassed by an explicit mock-mode branch in server.py:471-506 that detects the placeholder (empty, equals 'sk_test_emergent', or doesn't start with sk_test_/sk_live_) and synthesizes a pi_mock_<hex16> PaymentIntent + matching *_secret_mock client_secret, persisting stripe_mode='mock' on the booking. /api/payments/mock-confirm continues to mark the booking confirmed/paid and flip the matching unit to 'booked'. Verified via pytest (24/24) and via Playwright E2E booking flow as demo@user.com which now reaches the 'Token booked!' success state."
+}
