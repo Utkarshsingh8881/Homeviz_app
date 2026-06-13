@@ -1,0 +1,159 @@
+{
+  "app_name": "Aura Proptech",
+  "personality": "3 Editorial structure with 6 Glass / Luxe surfaces",
+  "personality_one_liner": "A highly refined, cinematic real estate experience where architectural elegance meets advanced AI capabilities.",
+  "color": {
+    "surface": "#FFFFFF",
+    "onSurface": "#0F172A",
+    "surfaceSecondary": "#F8FAFC",
+    "onSurfaceSecondary": "#334155",
+    "surfaceTertiary": "#F1F5F9",
+    "onSurfaceTertiary": "#475569",
+    "surfaceInverse": "#021013",
+    "onSurfaceInverse": "#FFFFFF",
+    "brand": "#0A2528",
+    "brandPrimary": "#0A2528",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#153E45",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#E5F0F2",
+    "onBrandTertiary": "#0A2528",
+    "success": "#166534",
+    "onSuccess": "#FFFFFF",
+    "warning": "#854D0E",
+    "onWarning": "#FFFFFF",
+    "error": "#991B1B",
+    "onError": "#FFFFFF",
+    "info": "#1E3A8A",
+    "onInfo": "#FFFFFF",
+    "border": "#E2E8F0",
+    "borderStrong": "#CBD5E1",
+    "divider": "#F1F5F9"
+  },
+  "typography": {
+    "displayFontFamily": "Playfair Display",
+    "textFontFamily": "Satoshi",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Use editorial spacing rhythms with generous vertical breathing room. Minimal padding on outer screen edges, but deep spacing between distinct conceptual blocks.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "0",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": "true",
+    "do's": [
+      "Use frosted glass over hero property imagery for floating actions and headers.",
+      "Use glass on bottom tab bars when content scrolls behind.",
+      "Pair glass with a tinted base (>=70% opacity in dark contexts) to ensure readability of foreground text."
+    ],
+    "dont's": [
+      "Never apply glass to standard form inputs, list rows, or body content.",
+      "Do not use generic shadows instead of glass for elevated elements over images."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-blur",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Home / Project Discovery",
+      "purpose": "Showcase premium property listings with cinematic visuals and editorial filtering.",
+      "states": {
+        "loading": "Centered elegant spinner with 'Curating exclusive properties...'",
+        "empty": "Abstract architectural SVG with 'No listings match your criteria.' and a 'Clear Filters' CTA.",
+        "error": "Clean text 'Unable to load properties.' with a 'Retry' button."
+      },
+      "layout": "Editorial magazine flow. Large typography header: 'Exclusive properties, curated for refined living'. Single column, full-width property cards with 100% width minus screen padding. Images must have a vertical gradient-to-dark scrim (transparent to >=70% surfaceInverse) at the bottom to hold white text (Price, Location)."
+    },
+    {
+      "name": "AI Room Customization Studio",
+      "purpose": "Immersive hero moment allowing buyers to visualize customized interiors and see live pricing.",
+      "states": {
+        "loading": "Pulsing outline of a room with 'Generating your AI design...'",
+        "empty": "Upload prompt icon with 'Upload a room photo to start customizing.'",
+        "error": "Error text 'AI generation failed.' with 'Try Again' button."
+      },
+      "layout": "Cinematic dark-mode or image-heavy feel. Top half of the screen is a massive, edge-to-edge image of the room preview. Bottom half features a sticky glass-morphic sheet containing horizontal scrollable 'brandTertiary' chips for 'Scandinavian', 'Modern', 'Finishes', and a prominent sticky CTA 'View Live Price Impact' anchored at the bottom."
+    },
+    {
+      "name": "Builder Construction Progress",
+      "purpose": "Allow users to track tower/unit construction and builders to upload updates.",
+      "states": {
+        "loading": "Centered spinner...",
+        "empty": "Blueprint illustration with 'No construction updates yet.'",
+        "error": "Error loading timeline."
+      },
+      "layout": "Vertical timeline tracking milestones. The hero banner uses a blueprint or construction image. Timeline nodes use small 'brandTertiary' tinted icon containers. Each milestone card sits on 'surfaceSecondary' with generous 'xl' spacing between stages."
+    },
+    {
+      "name": "Admin Verification Panel",
+      "purpose": "Data-dense dashboard for admins to verify builders, approve projects, and monitor transactions.",
+      "states": {
+        "loading": "Spinner...",
+        "empty": "'No pending verifications.'",
+        "error": "Error fetching queue."
+      },
+      "layout": "High-utility list view. Uses 'surfaceSecondary' for rows. Clear text hierarchy separating Builder Name, Document Status, and Trust Score badges. Fixed sticky header with segment controls."
+    }
+  ],
+  "images": {
+    "home_hero_exterior": {
+      "url": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBleHRlcmlvciUyMHByb3BlcnR5JTIwYXJjaGl0ZWN0dXJlfGVufDB8fHx8MTc4MTM0Nzk1NXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Modern white concrete luxury home exterior"
+    },
+    "ai_studio_interior": {
+      "url": "https://images.pexels.com/photos/20418771/pexels-photo-20418771.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Lavish modern living area with elegant decor"
+    },
+    "construction_blueprint": {
+      "url": "https://images.pexels.com/photos/34573691/pexels-photo-34573691.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Close-up of architectural blueprints spread out"
+    }
+  },
+  "haptics": {
+    "primary_button_press": "impactLight",
+    "tab_change": "selection",
+    "filter_chip_toggle": "selection",
+    "ai_customization_apply": "impactMedium",
+    "booking_success": "notificationSuccess"
+  },
+  "instructions_to_main_agent": [
+    "Strictly adhere to the '3 Editorial structure with 6 Glass / Luxe surfaces' personality. This means large, elegant Playfair Display typography, generous whitespace, and frosted glass elements over images.",
+    "NO BLUE/NAVY RULE ENFORCED: The user requested navy/teal. I have selected a very deep Midnight Teal (#0A2528) to satisfy the teal requirement while keeping it premium, earthy, and not looking like generic AI SaaS blue. Do not introduce any pure blue, indigo, or purple.",
+    "MANDATORY IMAGE SCRIM: For all property cards and hero images with text on top, you MUST apply a vertical 'expo-linear-gradient' from transparent (0%) to >=70% 'surfaceInverse' (100%) at the bottom. Render text in the bottom 30-40% using 'onSurfaceInverse'. Do not skip this.",
+    "Use 'image_selector_tool' fallback strategy for Builder Avatars: since real logo fetching failed during my pass, build avatar containers using the fallback strategy: 2-3 initials (weight 500) centered in a 'brandTertiary' tinted circle. Do not use random user SVGs.",
+    "AI Customization Studio is the hero screen. The room image should dominate the screen visually. Use horizontal scrolling chips for design options, and ensure the 'View Live Price' CTA is sticky at the bottom.",
+    "Every icon must be from the Phosphor set and maintain the same weight (either all filled or all outlined).",
+    "Ensure 'safe area' padding is respected at the root of every screen so content does not render under notches or home indicators."
+  ]
+}
