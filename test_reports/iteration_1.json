@@ -1,0 +1,66 @@
+{
+  "summary": "Aura Proptech first-pass full-stack test. Backend pytest suite: 23/24 PASS (95.8%). Only failure is Stripe PaymentIntent creation because STRIPE_SECRET_KEY=sk_test_emergent is an invalid placeholder key (Stripe responded 'Invalid API Key provided: sk_test_****gent'). All other endpoints work: auth (signup/login/me), JWT roles, projects list+filter+detail (no _id leaked), pricing engine (base+upgrades+5%GST+50k token verified arithmetically), Gemini Nano Banana AI customize-room (returned valid base64 image via emergentintegrations), bookings, mock-confirm flipping unit.status to 'booked', builder-only endpoints (403 for user), admin-only endpoints (403 for builder/user), admin verify/approve/stats. Frontend: all three role redirects work (user->/discover, builder->/projects, admin->/verify). User flow discover->project detail->AI Studio (chips selectable, live total recompute)->Booking screen all functional. Builder Projects list + Create-project form render. Admin Verify list, Projects (with Pending/All tabs and Approve action on TEST project), and Analytics dashboard all render correctly. Booking 'Start Stripe payment' button is wired but will surface Stripe error in UI due to bad key.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/payments/create-intent",
+        "issue": "Returns 500 'Invalid API Key provided: sk_test_****gent'. The STRIPE_SECRET_KEY in /app/backend/.env is the placeholder string 'sk_test_emergent', not a real Stripe test key (which look like sk_test_51...). Real Stripe call fails; mock-confirm still works on its own.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "POST /api/projects/{id}/progress",
+        "issue": "Accepts ProgressUpdate from client including client-supplied id/created_at, then immediately overwrites them server-side. Works fine but Pydantic forces clients to send dummy values for these. Consider a separate ProgressCreate input model without id/created_at."
+      },
+      {
+        "endpoint": "GET /api/projects (only_approved default)",
+        "issue": "Public listing defaults only_approved=True (good), but clients can pass ?only_approved=false to see unapproved projects without auth. Consider forbidding only_approved=false unless caller is admin."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Booking → Start Stripe payment",
+        "issue": "Tapping testID 'start-payment' on /booking will call /api/payments/create-intent which 500s due to invalid STRIPE_SECRET_KEY. End-user sees an error, blocking the test-mode payment demo. The UI does correctly disclose 'Test mode' and reference Confirm token payment, but the real Stripe leg is broken until the env key is fixed.",
+        "affected_testIDs": ["start-payment", "mock-confirm"]
+      }
+    ],
+    "design_issues": [],
+    "react_native_issues": [
+      {
+        "component": "Login (and likely shared components)",
+        "issue": "Console warning: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Some component is still passing pointerEvents as a prop instead of via style. Reference: warning observed on /auth/login render."
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Replace STRIPE_SECRET_KEY in /app/backend/.env with a real Stripe test secret key (format sk_test_51...). Without this the booking flow's real PaymentIntent step fails and only mock-confirm works.",
+    "Find the pointerEvents prop usage in the React Native code (TouchableOpacity/View) and move it into the style object: style={{ pointerEvents: 'none' }} instead of pointerEvents='none'.",
+    "(Optional) Split POST /api/projects/{id}/progress into a server-side ProgressCreate input that omits id/created_at, to clean up the client contract.",
+    "(Optional) Restrict ?only_approved=false on GET /api/projects to admin role only."
+  ],
+  "critical_code_review_comments": [
+    "Stripe key is hardcoded-looking placeholder in .env — must be replaced with a real test key before payments can be exercised.",
+    "Seed is idempotent via $setOnInsert (good). _id is consistently stripped from project/booking responses (verified — no _id leaked).",
+    "All interactive elements observed (login, demo buttons, project cards, customize-cta, studio chips, book-cta, start-payment, builder new-project-btn, cp-* form fields, admin verify-list, admin-proj-tabs, approve-*) have testID attributes. Coverage is good.",
+    "AI endpoint correctly uses emergentintegrations with model 'gemini-3.1-flash-image-preview' and returns base64 — verified end-to-end (one real call succeeded)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/conftest.py (created)",
+    "/app/backend/tests/test_backend.py (created)"
+  ],
+  "success_rate": {"backend": "95.8% (23/24)", "frontend": "~95% (all role redirects, navigation, forms, AI studio, booking screen render; Stripe leg blocked by invalid key)"},
+  "seed_data_creation": "Backend tests created a fresh signup user (TEST_signup_<ts>@example.com) and one builder project ('TEST Project <ts>') via authenticated POSTs. These remain in the DB and are now used as the 'Pending' approval target for admin tests. Tests also flipped one unit in proj-1 to status='booked' and verified+approved demo-builder-3 / proj-3.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend test file is /app/backend/tests/test_backend.py (pytest, uses EXPO_PUBLIC_BACKEND_URL). Demo creds in /app/memory/test_credentials.md. Note that after this run, demo-builder-3 (Marina Realty) is now verified and proj-3 (Marina Vista) is now approved — so the 'verify-demo-builder-3' and 'approve-proj-3' testIDs requested in the original test plan will not appear unless the DB is wiped and reseeded. Use the dynamically created 'TEST Project ...' (Pending) to exercise admin approval going forward. Frontend testIDs differ slightly from the request: book button is 'book-cta' (not 'book-btn'), customize button is 'customize-cta' (not 'customize-btn'), stripe button is 'start-payment' (not 'start-stripe').",
+  "rca_of_issue": "Stripe failure RCA: backend env STRIPE_SECRET_KEY=sk_test_emergent is a literal placeholder string. stripe.PaymentIntent.create raises stripe.error.AuthenticationError 'Invalid API Key provided: sk_test_****gent', which server.py catches and converts to HTTPException 500. Reproduce: login as demo@user.com, POST /api/bookings, then POST /api/payments/create-intent with the returned booking_id — get 500. Fix: set STRIPE_SECRET_KEY to a real Stripe test key in /app/backend/.env and `sudo supervisorctl restart backend`. /api/payments/mock-confirm itself works correctly (verified manually-ish via the flow): it flips booking.status=confirmed, booking.payment_status=succeeded, and units.$.status=booked."
+}
